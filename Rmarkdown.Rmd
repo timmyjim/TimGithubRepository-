@@ -29,4 +29,88 @@ You can also embed plots, for example:
 plot(pressure)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.data_url <- "https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Af119a05b-bbe7-4aea-93c6-85434dcb1c5e"
+
+esc <- tryCatch(
+    read.csv("data/escapement.csv", stringsAsFactors = FALSE),
+    error=function(cond) {
+        message(paste("Escapement file does not seem to exist, so get it from the KNB."))
+        esc <- read.csv(url(data_url, method = "libcurl"), stringsAsFactors = FALSE)
+        return(esc)
+    }
+)
+
+head(esc)
+
+```{r}
+  library(leaflet)
+  library(dplyr)
+  library(tidyr)
+  library(ggplot2)
+  library(DT)
+  library(sf)
+  library(ggmap) # devtools::install_github("dkahle/ggmap")
+```
+
+```{r}
+esc <- read.csv("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Af119a05b-bbe7-4aea-93c6-85434dcb1c5e", stringsAsFactors = F)
+```
+
+# Calculate Annual Escapement for Salmon Species 
+
+# Visualize Escapement 
+
+# Map Sampling Locations
+
+#Calculate total annual escapement by region, year and species 
+
+
+```{r}
+annual_esc <- esc %>% 
+  separate(sampleDate, c("Year", "Month", "Day"), sep = "-") %>% 
+  mutate(Year = as.numeric(Year)) %>% 
+  group_by(Species, SASAP.Region, Year) %>% 
+  summarize(escapement = sum(DailyCount)) %>% 
+  filter(Species %in% c("Chinook", "Sockeye", "Chum", "Coho", "Pink"))
+
+head(annual_esc)
+```
+
+```{r}
+ggplot(annual_esc, aes(x = Species, y = escapement)) +
+  geom_col()
+```
+
+```{r}
+ggplot(annual_esc, aes(x = Species, y = escapement)) +
+  geom_col(fill = "blue")
+```
+
+```{r}
+ggplot(annual_esc, aes(x = Species, y = escapement, fill = SASAP.Region)) +
+  geom_col(fill = "blue")
+```
+
+```{r}
+ggplot(annual_esc, aes(x = Species, y = escapement, fill = SASAP.Region)) +
+  geom_col()
+
+```
+
+```{r}
+ggplot(filter(annual_esc, SASAP.Region == "Kodiak"), aes(x = Year, y = escapement, color = Species)) + 
+    geom_line() +
+    geom_point() +
+    ylab("Escapement") +
+    ggtitle("Kodiak Salmon Escapement") +
+    theme_bw()
+```
+
+```{r}
+ggplot(annual_esc, aes(x = Year, y = escapement, color = Species)) +
+  geom_point() +
+  geom_line()
+facet_wrap(~SASAP.Region, scales = "free_y", ncol = 1)
+
+```
+

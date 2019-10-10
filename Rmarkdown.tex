@@ -163,7 +163,196 @@ You can also embed plots, for example:
 \includegraphics{Rmarkdown_files/figure-latex/pressure-1.pdf}
 
 Note that the \texttt{echo\ =\ FALSE} parameter was added to the code
-chunk to prevent printing of the R code that generated the plot.
+chunk to prevent printing of the R code that generated the
+plot.data\_url \textless{}-
+``\url{https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn\%3Auuid\%3Af119a05b-bbe7-4aea-93c6-85434dcb1c5e}''
+
+esc \textless{}- tryCatch( read.csv(``data/escapement.csv'',
+stringsAsFactors = FALSE), error=function(cond) \{
+message(paste(``Escapement file does not seem to exist, so get it from
+the KNB.'')) esc \textless{}- read.csv(url(data\_url, method =
+``libcurl''), stringsAsFactors = FALSE) return(esc) \} )
+
+head(esc)
+
+\begin{Shaded}
+\begin{Highlighting}[]
+  \KeywordTok{library}\NormalTok{(leaflet)}
+  \KeywordTok{library}\NormalTok{(dplyr)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Attaching package: 'dplyr'
+\end{verbatim}
+
+\begin{verbatim}
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+\end{verbatim}
+
+\begin{verbatim}
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+  \KeywordTok{library}\NormalTok{(tidyr)}
+  \KeywordTok{library}\NormalTok{(ggplot2)}
+  \KeywordTok{library}\NormalTok{(DT)}
+  \KeywordTok{library}\NormalTok{(sf)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Linking to GEOS 3.7.2, GDAL 2.4.2, PROJ 5.2.0
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+  \KeywordTok{library}\NormalTok{(ggmap) }\CommentTok{# devtools::install_github("dkahle/ggmap")}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Google's Terms of Service: https://cloud.google.com/maps-platform/terms/.
+\end{verbatim}
+
+\begin{verbatim}
+## Please cite ggmap if you use it! See citation("ggmap") for details.
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{esc <-}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\StringTok{"https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Af119a05b-bbe7-4aea-93c6-85434dcb1c5e"}\NormalTok{, }\DataTypeTok{stringsAsFactors =}\NormalTok{ F)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{calculate-annual-escapement-for-salmon-species}{%
+\section{Calculate Annual Escapement for Salmon
+Species}\label{calculate-annual-escapement-for-salmon-species}}
+
+\hypertarget{visualize-escapement}{%
+\section{Visualize Escapement}\label{visualize-escapement}}
+
+\hypertarget{map-sampling-locations}{%
+\section{Map Sampling Locations}\label{map-sampling-locations}}
+
+\#Calculate total annual escapement by region, year and species
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{annual_esc <-}\StringTok{ }\NormalTok{esc }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{separate}\NormalTok{(sampleDate, }\KeywordTok{c}\NormalTok{(}\StringTok{"Year"}\NormalTok{, }\StringTok{"Month"}\NormalTok{, }\StringTok{"Day"}\NormalTok{), }\DataTypeTok{sep =} \StringTok{"-"}\NormalTok{) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{Year =} \KeywordTok{as.numeric}\NormalTok{(Year)) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{group_by}\NormalTok{(Species, SASAP.Region, Year) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{escapement =} \KeywordTok{sum}\NormalTok{(DailyCount)) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{filter}\NormalTok{(Species }\OperatorTok{%in%}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"Chinook"}\NormalTok{, }\StringTok{"Sockeye"}\NormalTok{, }\StringTok{"Chum"}\NormalTok{, }\StringTok{"Coho"}\NormalTok{, }\StringTok{"Pink"}\NormalTok{))}
+
+\KeywordTok{head}\NormalTok{(annual_esc)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 6 x 4
+## # Groups:   Species, SASAP.Region [1]
+##   Species SASAP.Region                           Year escapement
+##   <chr>   <chr>                                 <dbl>      <int>
+## 1 Chinook Alaska Peninsula and Aleutian Islands  1974       1092
+## 2 Chinook Alaska Peninsula and Aleutian Islands  1975       1917
+## 3 Chinook Alaska Peninsula and Aleutian Islands  1976       3045
+## 4 Chinook Alaska Peninsula and Aleutian Islands  1977       4844
+## 5 Chinook Alaska Peninsula and Aleutian Islands  1978       3901
+## 6 Chinook Alaska Peninsula and Aleutian Islands  1979      10463
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(annual_esc, }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ Species, }\DataTypeTok{y =}\NormalTok{ escapement)) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_col}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Rmarkdown_files/figure-latex/unnamed-chunk-4-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(annual_esc, }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ Species, }\DataTypeTok{y =}\NormalTok{ escapement)) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_col}\NormalTok{(}\DataTypeTok{fill =} \StringTok{"blue"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Rmarkdown_files/figure-latex/unnamed-chunk-5-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(annual_esc, }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ Species, }\DataTypeTok{y =}\NormalTok{ escapement, }\DataTypeTok{fill =}\NormalTok{ SASAP.Region)) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_col}\NormalTok{(}\DataTypeTok{fill =} \StringTok{"blue"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Rmarkdown_files/figure-latex/unnamed-chunk-6-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(annual_esc, }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ Species, }\DataTypeTok{y =}\NormalTok{ escapement, }\DataTypeTok{fill =}\NormalTok{ SASAP.Region)) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_col}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Rmarkdown_files/figure-latex/unnamed-chunk-7-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{filter}\NormalTok{(annual_esc, SASAP.Region }\OperatorTok{==}\StringTok{ "Kodiak"}\NormalTok{), }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ Year, }\DataTypeTok{y =}\NormalTok{ escapement, }\DataTypeTok{color =}\NormalTok{ Species)) }\OperatorTok{+}\StringTok{ }
+\StringTok{    }\KeywordTok{geom_line}\NormalTok{() }\OperatorTok{+}
+\StringTok{    }\KeywordTok{geom_point}\NormalTok{() }\OperatorTok{+}
+\StringTok{    }\KeywordTok{ylab}\NormalTok{(}\StringTok{"Escapement"}\NormalTok{) }\OperatorTok{+}
+\StringTok{    }\KeywordTok{ggtitle}\NormalTok{(}\StringTok{"Kodiak Salmon Escapement"}\NormalTok{) }\OperatorTok{+}
+\StringTok{    }\KeywordTok{theme_bw}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Rmarkdown_files/figure-latex/unnamed-chunk-8-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(annual_esc, }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ Year, }\DataTypeTok{y =}\NormalTok{ escapement, }\DataTypeTok{color =}\NormalTok{ Species)) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_point}\NormalTok{() }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_line}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Rmarkdown_files/figure-latex/unnamed-chunk-9-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{facet_wrap}\NormalTok{(}\OperatorTok{~}\NormalTok{SASAP.Region, }\DataTypeTok{scales =} \StringTok{"free_y"}\NormalTok{, }\DataTypeTok{ncol =} \DecValTok{1}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## <ggproto object: Class FacetWrap, Facet, gg>
+##     compute_layout: function
+##     draw_back: function
+##     draw_front: function
+##     draw_labels: function
+##     draw_panels: function
+##     finish_data: function
+##     init_scales: function
+##     map_data: function
+##     params: list
+##     setup_data: function
+##     setup_params: function
+##     shrink: TRUE
+##     train_scales: function
+##     vars: function
+##     super:  <ggproto object: Class FacetWrap, Facet, gg>
+\end{verbatim}
 
 
 \end{document}
